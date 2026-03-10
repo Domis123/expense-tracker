@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Shop } from '@/lib/types'
 
@@ -22,13 +22,19 @@ export default function AddExpenseModal({ open, onClose, onAdded }: Props) {
   const [newShopName, setNewShopName] = useState('')
   const [showNewShop, setShowNewShop] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const sheetRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (open) {
       supabase.from('shops').select('*').order('name').then(({ data }) => {
         if (data) setShops(data)
       })
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
     }
+    return () => { document.body.style.overflow = '' }
   }, [open])
 
   const canSubmit = person && shopId && amount && Number(amount) > 0 && !submitting
@@ -72,29 +78,36 @@ export default function AddExpenseModal({ open, onClose, onAdded }: Props) {
 
   if (!open) return null
 
-  const btnStyle = (active: boolean) => ({
-    padding: '12px',
-    border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`,
+  const labelStyle = {
+    fontSize: 11, fontWeight: 600 as const, textTransform: 'uppercase' as const,
+    letterSpacing: 0.8, color: 'var(--text-secondary)',
+    display: 'block', marginBottom: 10,
+  }
+
+  const toggleBtn = (active: boolean) => ({
+    padding: '12px 16px',
+    border: `1.5px solid ${active ? 'var(--text)' : 'var(--border)'}`,
     borderRadius: 6,
     background: active ? 'var(--text)' : 'var(--bg-card)',
     fontFamily: 'var(--font-sans)',
-    fontSize: 14,
-    fontWeight: 500 as const,
+    fontSize: 14, fontWeight: 500 as const,
     cursor: 'pointer' as const,
     transition: 'all 0.15s',
     color: active ? 'var(--bg-card)' : 'var(--text-secondary)',
+    minHeight: 48,
   })
 
   const chipStyle = (active: boolean) => ({
-    padding: '8px 14px',
-    border: `1px solid ${active ? 'var(--accent-dark)' : 'var(--border)'}`,
+    padding: '10px 16px',
+    border: `1.5px solid ${active ? 'var(--accent-dark)' : 'var(--border)'}`,
     borderRadius: 6,
     background: active ? 'var(--accent-light)' : 'var(--bg-card)',
     fontFamily: 'var(--font-sans)',
-    fontSize: 13,
+    fontSize: 14, fontWeight: 500 as const,
     cursor: 'pointer' as const,
     transition: 'all 0.15s',
     color: active ? 'var(--accent-dark)' : 'var(--text-secondary)',
+    minHeight: 44,
   })
 
   return (
@@ -102,41 +115,71 @@ export default function AddExpenseModal({ open, onClose, onAdded }: Props) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
       style={{
         position: 'fixed', inset: 0,
-        background: 'rgba(45, 43, 40, 0.3)',
-        backdropFilter: 'blur(4px)',
+        background: 'rgba(45, 43, 40, 0.35)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
         zIndex: 200,
         display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
       }}
     >
-      <div style={{
-        background: 'var(--bg-card)', width: '100%', maxWidth: 480,
-        borderRadius: '12px 12px 0 0', padding: '24px 20px calc(20px + env(safe-area-inset-bottom, 0px))',
-        maxHeight: '90vh', overflowY: 'auto' as const,
-      }}>
-        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 400, marginBottom: 20 }}>
+      <div
+        ref={sheetRef}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'var(--bg-card)', width: '100%', maxWidth: 480,
+          borderRadius: '14px 14px 0 0',
+          padding: '20px 20px calc(20px + env(safe-area-inset-bottom, 0px))',
+          maxHeight: '92vh', overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
+        {/* Drag handle */}
+        <div style={{
+          width: 36, height: 4, borderRadius: 2,
+          background: 'var(--border)', margin: '0 auto 18px',
+        }} />
+
+        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 400, marginBottom: 22 }}>
           Add expense
         </h2>
 
         {/* Person */}
-        <div style={{ marginBottom: 18 }}>
-          <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: 0.8, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>
-            Who
-          </label>
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Who</label>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {PERSONS.map(p => (
-              <button key={p} style={btnStyle(person === p)} onClick={() => setPerson(p)}>
+              <button key={p} style={toggleBtn(person === p)} onClick={() => setPerson(p)}>
                 {p}
               </button>
             ))}
           </div>
         </div>
 
+        {/* Amount — moved up for faster entry */}
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Amount (€)</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            inputMode="decimal"
+            placeholder="0.00"
+            value={amount}
+            onChange={e => setAmount(e.target.value)}
+            style={{
+              width: '100%', padding: '16px',
+              border: '1.5px solid var(--border)', borderRadius: 6,
+              fontFamily: 'var(--font-serif)', fontSize: 32,
+              textAlign: 'center' as const,
+              outline: 'none', color: 'var(--text)', background: 'var(--bg)',
+            }}
+          />
+        </div>
+
         {/* Shop */}
-        <div style={{ marginBottom: 18 }}>
-          <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: 0.8, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>
-            Shop
-          </label>
-          <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 6 }}>
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Shop</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 8 }}>
             {shops.map(s => (
               <button key={s.id} style={chipStyle(shopId === s.id)} onClick={() => setShopId(s.id)}>
                 {s.name}
@@ -150,11 +193,11 @@ export default function AddExpenseModal({ open, onClose, onAdded }: Props) {
             </button>
           </div>
           {showNewShop && (
-            <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
               <input
                 style={{
-                  flex: 1, padding: '8px 12px', border: '1px solid var(--border)',
-                  borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 13,
+                  flex: 1, padding: '10px 14px', border: '1.5px solid var(--border)',
+                  borderRadius: 6, fontFamily: 'var(--font-sans)', fontSize: 14,
                   outline: 'none', color: 'var(--text)', background: 'var(--bg)',
                 }}
                 placeholder="Shop name"
@@ -166,9 +209,10 @@ export default function AddExpenseModal({ open, onClose, onAdded }: Props) {
               <button
                 onClick={handleAddShop}
                 style={{
-                  padding: '8px 14px', border: 'none', borderRadius: 6,
+                  padding: '10px 16px', border: 'none', borderRadius: 6,
                   background: 'var(--accent)', color: 'white',
-                  fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, cursor: 'pointer'
+                  fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer', minHeight: 44,
                 }}
               >
                 Add
@@ -177,53 +221,28 @@ export default function AddExpenseModal({ open, onClose, onAdded }: Props) {
           )}
         </div>
 
-        {/* Amount */}
-        <div style={{ marginBottom: 18 }}>
-          <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: 0.8, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>
-            Amount (€)
-          </label>
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            inputMode="decimal"
-            placeholder="0.00"
-            value={amount}
-            onChange={e => setAmount(e.target.value)}
-            style={{
-              width: '100%', padding: '14px 16px',
-              border: '1px solid var(--border)', borderRadius: 6,
-              fontFamily: 'var(--font-serif)', fontSize: 28, textAlign: 'center' as const,
-              outline: 'none', color: 'var(--text)', background: 'var(--bg)',
-            }}
-          />
-        </div>
-
         {/* Category */}
-        <div style={{ marginBottom: 18 }}>
-          <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: 0.8, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>
-            Category
-          </label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button style={btnStyle(category === 'food')} onClick={() => setCategory('food')}>Food</button>
-            <button style={btnStyle(category === 'other')} onClick={() => setCategory('other')}>Other</button>
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Category</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button style={toggleBtn(category === 'food')} onClick={() => setCategory('food')}>Food</button>
+            <button style={toggleBtn(category === 'other')} onClick={() => setCategory('other')}>Other</button>
           </div>
         </div>
 
         {/* Note */}
-        <div style={{ marginBottom: 18 }}>
-          <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: 0.8, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>
-            Note (optional)
-          </label>
+        <div style={{ marginBottom: 24 }}>
+          <label style={labelStyle}>Note (optional)</label>
           <input
             placeholder="What was it for?"
             value={note}
             onChange={e => setNote(e.target.value)}
             style={{
-              width: '100%', padding: '10px 14px',
-              border: '1px solid var(--border)', borderRadius: 6,
-              fontFamily: 'var(--font-sans)', fontSize: 13,
+              width: '100%', padding: '12px 14px',
+              border: '1.5px solid var(--border)', borderRadius: 6,
+              fontFamily: 'var(--font-sans)', fontSize: 14,
               outline: 'none', color: 'var(--text)', background: 'var(--bg)',
+              minHeight: 48,
             }}
           />
         </div>
@@ -233,12 +252,13 @@ export default function AddExpenseModal({ open, onClose, onAdded }: Props) {
           disabled={!canSubmit}
           onClick={handleSubmit}
           style={{
-            width: '100%', padding: 14, border: 'none', borderRadius: 6,
+            width: '100%', padding: 16, border: 'none', borderRadius: 6,
             background: 'var(--text)', color: 'var(--bg-card)',
-            fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 600,
+            fontFamily: 'var(--font-sans)', fontSize: 15, fontWeight: 600,
             cursor: canSubmit ? 'pointer' : 'not-allowed',
             opacity: canSubmit ? 1 : 0.4, letterSpacing: 0.3,
-            transition: 'opacity 0.15s', marginTop: 6
+            transition: 'opacity 0.15s',
+            minHeight: 52,
           }}
         >
           {submitting ? 'Adding...' : 'Add expense'}

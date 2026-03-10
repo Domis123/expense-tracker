@@ -40,7 +40,7 @@ export default function History() {
 
   return (
     <>
-      <div style={{ padding: '52px 24px 20px' }}>
+      <div style={{ paddingTop: 'max(52px, calc(env(safe-area-inset-top, 0px) + 16px))', padding: 'max(52px, calc(env(safe-area-inset-top, 0px) + 16px)) 20px 12px' }}>
         <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 26, fontWeight: 400 }}>
           History
         </h1>
