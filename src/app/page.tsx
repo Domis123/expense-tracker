@@ -13,7 +13,7 @@ export default function Home() {
   const [category, setCategory] = useState<'food' | 'other'>('food')
   const [budget, setBudget] = useState(0)
   const [showAdd, setShowAdd] = useState(false)
-
+  const [editingExpense, setEditingExpense] = useState<ExpenseWithShop | null>(null)
   const monthStart = getMonthStart()
   const monthEnd = getMonthEnd(monthStart)
 
@@ -121,7 +121,7 @@ export default function Home() {
           </div>
         )}
 
-        <ExpenseList expenses={expenses} onDelete={handleDelete} />
+         <ExpenseList expenses={expenses} onDelete={handleDelete} onEdit={(e) => { setEditingExpense(e); setShowAdd(true) }} />
       </div>
 
       <button
@@ -141,7 +141,12 @@ export default function Home() {
         +
       </button>
 
-      <AddExpenseModal open={showAdd} onClose={() => setShowAdd(false)} onAdded={fetchExpenses} />
+      <AddExpenseModal
+        open={showAdd}
+        onClose={() => { setShowAdd(false); setEditingExpense(null) }}
+        onAdded={fetchExpenses}
+        editExpense={editingExpense}
+      />
     </>
   )
 }

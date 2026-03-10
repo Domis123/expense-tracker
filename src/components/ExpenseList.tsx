@@ -7,9 +7,10 @@ import { useState } from 'react'
 interface Props {
   expenses: ExpenseWithShop[]
   onDelete?: (id: string) => void
+  onEdit?: (expense: ExpenseWithShop) => void
 }
 
-export default function ExpenseList({ expenses, onDelete }: Props) {
+export default function ExpenseList({ expenses, onDelete, onEdit }: Props) {
   const [confirmId, setConfirmId] = useState<string | null>(null)
 
   const grouped: Record<string, ExpenseWithShop[]> = {}
@@ -54,6 +55,7 @@ export default function ExpenseList({ expenses, onDelete }: Props) {
           {items.map(e => (
             <div
               key={e.id}
+              onClick={() => onEdit?.(e)}
               style={{
                 display: 'flex', alignItems: 'center',
                 padding: '14px 16px',
@@ -62,6 +64,7 @@ export default function ExpenseList({ expenses, onDelete }: Props) {
                 borderRadius: 6, marginBottom: 6,
                 transition: 'all 0.2s',
                 minHeight: 56,
+                cursor: onEdit ? 'pointer' : 'default',
               }}
             >
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -90,7 +93,7 @@ export default function ExpenseList({ expenses, onDelete }: Props) {
               </span>
               {onDelete && (
                 <button
-                  onClick={() => handleTapDelete(e.id)}
+                  onClick={(ev) => { ev.stopPropagation(); handleTapDelete(e.id) }}
                   style={{
                     marginLeft: 8, width: 32, height: 32,
                     borderRadius: 6, border: '1px solid var(--border)',
