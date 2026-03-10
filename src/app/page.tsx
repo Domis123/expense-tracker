@@ -73,41 +73,67 @@ export default function Home() {
     fetchExpenses()
   }
 
-  const catBtnStyle = (active: boolean) => ({
-    padding: '7px 14px',
-    border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`,
-    borderRadius: 6,
-    background: active ? 'var(--text)' : 'var(--bg-card)',
-    fontFamily: 'var(--font-sans)',
-    fontSize: 12,
-    fontWeight: 500 as const,
-    color: active ? 'var(--bg-card)' : 'var(--text-secondary)',
-    cursor: 'pointer' as const,
-    transition: 'all 0.15s',
-  })
-
   return (
     <>
-      <div style={{ padding: '52px 24px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 26, fontWeight: 400, letterSpacing: -0.5 }}>
+      {/* Header */}
+      <div style={{
+        paddingTop: 'max(52px, calc(env(safe-area-inset-top, 0px) + 16px))',
+        padding: 'max(52px, calc(env(safe-area-inset-top, 0px) + 16px)) 20px 12px',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+      }}>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 400, letterSpacing: -0.5 }}>
           Expenses
         </h1>
-        <span style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 500, letterSpacing: 0.3 }}>
+        <span style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 500 }}>
           {weekLabel(monday)}
         </span>
       </div>
 
-      <div style={{ padding: '0 20px 120px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button style={catBtnStyle(category === 'food')} onClick={() => setCategory('food')}>Food</button>
-          <button style={catBtnStyle(category === 'other')} onClick={() => setCategory('other')}>Other</button>
+      <div style={{ padding: '0 20px 140px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {/* Category toggle */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          {(['food', 'other'] as const).map(cat => (
+            <button
+              key={cat}
+              onClick={() => setCategory(cat)}
+              style={{
+                padding: '10px 20px',
+                border: `1.5px solid ${category === cat ? 'var(--text)' : 'var(--border)'}`,
+                borderRadius: 6,
+                background: category === cat ? 'var(--text)' : 'var(--bg-card)',
+                fontFamily: 'var(--font-sans)',
+                fontSize: 13,
+                fontWeight: 600,
+                color: category === cat ? 'var(--bg-card)' : 'var(--text-secondary)',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+                textTransform: 'capitalize',
+                minHeight: 44,
+              }}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
 
+        {/* Budget card */}
         <BudgetCard spent={spent} budget={budget} category={category} transactionCount={catExpenses.length} />
 
+        {/* Divider label */}
+        {expenses.length > 0 && (
+          <div style={{
+            fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
+            letterSpacing: 0.8, color: 'var(--text-tertiary)', paddingTop: 4,
+          }}>
+            This week
+          </div>
+        )}
+
+        {/* Expense list */}
         <ExpenseList expenses={expenses} onDelete={handleDelete} />
       </div>
 
+      {/* FAB */}
       <button
         onClick={() => setShowAdd(true)}
         style={{

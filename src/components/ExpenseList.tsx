@@ -2,6 +2,7 @@
 
 import { fmtDate, fmtTime } from '@/lib/dates'
 import type { ExpenseWithShop } from '@/lib/types'
+import { useState } from 'react'
 
 interface Props {
   expenses: ExpenseWithShop[]
@@ -9,6 +10,8 @@ interface Props {
 }
 
 export default function ExpenseList({ expenses, onDelete }: Props) {
+  const [confirmId, setConfirmId] = useState<string | null>(null)
+
   const grouped: Record<string, ExpenseWithShop[]> = {}
   expenses.forEach(e => {
     const key = fmtDate(e.created_at)
@@ -18,13 +21,23 @@ export default function ExpenseList({ expenses, onDelete }: Props) {
 
   if (Object.keys(grouped).length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--text-tertiary)' }}>
-        <div style={{ fontSize: 32, marginBottom: 12 }}>○</div>
+      <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-tertiary)' }}>
+        <div style={{ fontSize: 28, marginBottom: 10, opacity: 0.5 }}>○</div>
         <div style={{ fontSize: 14, lineHeight: 1.6 }}>
           No expenses yet.<br />Tap + to add one.
         </div>
       </div>
     )
+  }
+
+  const handleTapDelete = (id: string) => {
+    if (confirmId === id) {
+      onDelete?.(id)
+      setConfirmId(null)
+    } else {
+      setConfirmId(id)
+      setTimeout(() => setConfirmId(null), 3000)
+    }
   }
 
   return (
@@ -34,67 +47,68 @@ export default function ExpenseList({ expenses, onDelete }: Props) {
           <div style={{
             fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const,
             letterSpacing: 0.8, color: 'var(--text-tertiary)',
-            padding: '8px 0 4px'
+            padding: '6px 0 4px',
           }}>
             {date}
           </div>
           {items.map(e => (
             <div
               key={e.id}
-              className="expense-row"
               style={{
                 display: 'flex', alignItems: 'center',
-                padding: '14px 16px', background: 'var(--bg-card)',
-                border: '1px solid var(--border-light)', borderRadius: 6,
-                marginBottom: 6, position: 'relative', cursor: 'default'
+                padding: '14px 16px',
+                background: confirmId === e.id ? 'var(--red-light)' : 'var(--bg-card)',
+                border: `1px solid ${confirmId === e.id ? 'var(--red)' : 'var(--border-light)'}`,
+                borderRadius: 6, marginBottom: 6,
+                transition: 'all 0.2s',
+                minHeight: 56,
               }}
             >
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 500, fontSize: 14 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 500, fontSize: 15 }}>
                   {e.shops?.name || 'Unknown'}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 1 }}>
+                <div style={{
+                  fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
                   {e.person}{e.note ? ` · ${e.note}` : ''}
                 </div>
               </div>
               <span style={{
                 fontFamily: 'var(--font-serif)', fontSize: 18,
-                fontWeight: 500, letterSpacing: -0.5
+                fontWeight: 500, letterSpacing: -0.5,
+                marginLeft: 12, whiteSpace: 'nowrap',
               }}>
                 €{Number(e.amount).toFixed(2)}
               </span>
               <span style={{
                 fontSize: 10, color: 'var(--text-tertiary)',
-                marginLeft: 12, minWidth: 40, textAlign: 'right' as const
+                marginLeft: 10, minWidth: 36, textAlign: 'right' as const,
               }}>
                 {fmtTime(e.created_at)}
               </span>
               {onDelete && (
                 <button
-                  onClick={() => onDelete(e.id)}
-                  className="delete-btn"
+                  onClick={() => handleTapDelete(e.id)}
                   style={{
-                    position: 'absolute', right: -8, top: -8,
-                    width: 22, height: 22, borderRadius: '50%',
-                    border: '1px solid var(--border)', background: 'var(--bg-card)',
-                    color: 'var(--red)', fontSize: 13, cursor: 'pointer',
+                    marginLeft: 8, width: 32, height: 32,
+                    borderRadius: 6, border: '1px solid var(--border)',
+                    background: confirmId === e.id ? 'var(--red)' : 'var(--bg)',
+                    color: confirmId === e.id ? 'white' : 'var(--text-tertiary)',
+                    fontSize: 12, cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: 'var(--shadow-sm)', lineHeight: 1,
-                    opacity: 0, transition: 'opacity 0.15s'
+                    transition: 'all 0.15s',
+                    flexShrink: 0,
                   }}
                 >
-                  ×
+                  {confirmId === e.id ? '✓' : '×'}
                 </button>
               )}
             </div>
           ))}
         </div>
       ))}
-      <style>{`
-        .expense-row:hover .delete-btn {
-          opacity: 1 !important;
-        }
-      `}</style>
     </div>
   )
 }
