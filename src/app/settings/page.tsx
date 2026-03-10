@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getMonday, toISODate } from '@/lib/dates'
+import { getMonthStart, toISODate } from '@/lib/dates'
 import type { Shop } from '@/lib/types'
 
 export default function Settings() {
@@ -34,7 +34,7 @@ export default function Settings() {
   const saveBudget = async (cat: 'food' | 'other', val: string) => {
     const amount = parseFloat(val)
     if (isNaN(amount) || amount < 0) return
-    const week_start = toISODate(getMonday())
+    const week_start = toISODate(getMonthStart())
 
     await supabase
       .from('budgets')
@@ -70,7 +70,7 @@ export default function Settings() {
         {/* Budgets */}
         <div>
           <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: 0.8, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>
-            Weekly budgets
+          Monthly budgets
           </label>
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',

@@ -2,30 +2,30 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getMonday, getSunday, weekLabel, fmtDate, fmtTime } from '@/lib/dates'
+import { getMonthStart, getMonthEnd, monthLabel, fmtDate, fmtTime } from '@/lib/dates'
 import type { ExpenseWithShop } from '@/lib/types'
 
 export default function History() {
-  const [weekOffset, setWeekOffset] = useState(0)
+  const [monthOffset, setMonthOffset] = useState(0)
   const [expenses, setExpenses] = useState<ExpenseWithShop[]>([])
 
-  const monday = getMonday()
-  monday.setDate(monday.getDate() + weekOffset * 7)
-  const sunday = getSunday(monday)
-  const isCurrentWeek = weekOffset === 0
+  const monthStart = getMonthStart()
+  monthStart.setMonth(monthStart.getMonth() + monthOffset)
+  const monthEnd = getMonthEnd(monthStart)
+  const isCurrentMonth = monthOffset === 0
 
-  const fetchWeek = useCallback(async () => {
+  const fetchMonth = useCallback(async () => {
     const { data } = await supabase
       .from('expenses')
       .select('*, shops(name)')
-      .gte('created_at', monday.toISOString())
-      .lte('created_at', sunday.toISOString())
+      .gte('created_at', monthStart.toISOString())
+      .lte('created_at', monthEnd.toISOString())
       .order('created_at', { ascending: false })
 
     if (data) setExpenses(data as ExpenseWithShop[])
-  }, [weekOffset])
+  }, [monthOffset])
 
-  useEffect(() => { fetchWeek() }, [fetchWeek])
+  useEffect(() => { fetchMonth() }, [fetchMonth])
 
   const foodSpent = expenses.filter(e => e.category === 'food').reduce((s, e) => s + Number(e.amount), 0)
   const otherSpent = expenses.filter(e => e.category === 'other').reduce((s, e) => s + Number(e.amount), 0)
@@ -47,29 +47,29 @@ export default function History() {
       </div>
 
       <div style={{ padding: '0 20px 120px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {/* Week nav */}
+        {/* Month nav */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0' }}>
           <button
-            onClick={() => setWeekOffset(o => o - 1)}
+            onClick={() => setMonthOffset(o => o - 1)}
             style={{
-              width: 36, height: 36, border: '1px solid var(--border)', borderRadius: 6,
+              width: 44, height: 44, border: '1px solid var(--border)', borderRadius: 6,
               background: 'var(--bg-card)', cursor: 'pointer', display: 'flex',
               alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--text-secondary)',
             }}
           >
             ←
           </button>
-          <span style={{ fontFamily: 'var(--font-serif)', fontSize: 15 }}>
-            {isCurrentWeek ? 'This week' : weekLabel(monday)}
+          <span style={{ fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 500 }}>
+            {isCurrentMonth ? 'This month' : monthLabel(monthStart)}
           </span>
           <button
-            disabled={isCurrentWeek}
-            onClick={() => setWeekOffset(o => o + 1)}
+            disabled={isCurrentMonth}
+            onClick={() => setMonthOffset(o => o + 1)}
             style={{
-              width: 36, height: 36, border: '1px solid var(--border)', borderRadius: 6,
-              background: 'var(--bg-card)', cursor: isCurrentWeek ? 'not-allowed' : 'pointer',
+              width: 44, height: 44, border: '1px solid var(--border)', borderRadius: 6,
+              background: 'var(--bg-card)', cursor: isCurrentMonth ? 'not-allowed' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 16, color: 'var(--text-secondary)', opacity: isCurrentWeek ? 0.3 : 1,
+              fontSize: 16, color: 'var(--text-secondary)', opacity: isCurrentMonth ? 0.3 : 1,
             }}
           >
             →
@@ -101,8 +101,8 @@ export default function History() {
         {/* Expenses */}
         {Object.keys(grouped).length === 0 ? (
           <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--text-tertiary)' }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>○</div>
-            <div style={{ fontSize: 14 }}>No expenses this week.</div>
+            <div style={{ fontSize: 28, marginBottom: 12, opacity: 0.5 }}>○</div>
+            <div style={{ fontSize: 14 }}>No expenses this month.</div>
           </div>
         ) : (
           Object.entries(grouped).map(([date, items]) => (
@@ -114,18 +114,18 @@ export default function History() {
                 <div key={e.id} style={{
                   display: 'flex', alignItems: 'center', padding: '14px 16px',
                   background: 'var(--bg-card)', border: '1px solid var(--border-light)',
-                  borderRadius: 6, marginBottom: 6,
+                  borderRadius: 6, marginBottom: 6, minHeight: 56,
                 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 500, fontSize: 14 }}>{e.shops?.name || 'Unknown'}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 500, fontSize: 15 }}>{e.shops?.name || 'Unknown'}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>
                       {e.person}{e.note ? ` · ${e.note}` : ''}
                     </div>
                   </div>
-                  <span style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 500, letterSpacing: -0.5 }}>
+                  <span style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 500, letterSpacing: -0.5, marginLeft: 12 }}>
                     €{Number(e.amount).toFixed(2)}
                   </span>
-                  <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 12, minWidth: 40, textAlign: 'right' as const }}>
+                  <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 10, minWidth: 36, textAlign: 'right' as const }}>
                     {fmtTime(e.created_at)}
                   </span>
                 </div>

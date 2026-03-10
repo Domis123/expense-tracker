@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getMonday, getSunday, weekLabel, toISODate } from '@/lib/dates'
+import { getMonthStart, getMonthEnd, monthLabel, toISODate } from '@/lib/dates'
 import type { ExpenseWithShop } from '@/lib/types'
 import BudgetCard from '@/components/BudgetCard'
 import ExpenseList from '@/components/ExpenseList'
@@ -14,15 +14,15 @@ export default function Home() {
   const [budget, setBudget] = useState(0)
   const [showAdd, setShowAdd] = useState(false)
 
-  const monday = getMonday()
-  const sunday = getSunday(monday)
+  const monthStart = getMonthStart()
+  const monthEnd = getMonthEnd(monthStart)
 
   const fetchExpenses = useCallback(async () => {
     const { data } = await supabase
       .from('expenses')
       .select('*, shops(name)')
-      .gte('created_at', monday.toISOString())
-      .lte('created_at', sunday.toISOString())
+      .gte('created_at', monthStart.toISOString())
+      .lte('created_at', monthEnd.toISOString())
       .order('created_at', { ascending: false })
 
     if (data) setExpenses(data as ExpenseWithShop[])
@@ -33,7 +33,7 @@ export default function Home() {
       .from('budgets')
       .select('amount')
       .eq('category', category)
-      .eq('week_start', toISODate(monday))
+      .eq('week_start', toISODate(monthStart))
       .single()
 
     if (data) {
@@ -75,7 +75,6 @@ export default function Home() {
 
   return (
     <>
-      {/* Header */}
       <div style={{
         paddingTop: 'max(52px, calc(env(safe-area-inset-top, 0px) + 16px))',
         padding: 'max(52px, calc(env(safe-area-inset-top, 0px) + 16px)) 20px 12px',
@@ -85,12 +84,11 @@ export default function Home() {
           Expenses
         </h1>
         <span style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 500 }}>
-          {weekLabel(monday)}
+          {monthLabel(monthStart)}
         </span>
       </div>
 
       <div style={{ padding: '0 20px 140px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {/* Category toggle */}
         <div style={{ display: 'flex', gap: 8 }}>
           {(['food', 'other'] as const).map(cat => (
             <button
@@ -101,14 +99,10 @@ export default function Home() {
                 border: `1.5px solid ${category === cat ? 'var(--text)' : 'var(--border)'}`,
                 borderRadius: 6,
                 background: category === cat ? 'var(--text)' : 'var(--bg-card)',
-                fontFamily: 'var(--font-sans)',
-                fontSize: 13,
-                fontWeight: 600,
+                fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600,
                 color: category === cat ? 'var(--bg-card)' : 'var(--text-secondary)',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-                textTransform: 'capitalize',
-                minHeight: 44,
+                cursor: 'pointer', transition: 'all 0.15s',
+                textTransform: 'capitalize', minHeight: 44,
               }}
             >
               {cat}
@@ -116,24 +110,20 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Budget card */}
         <BudgetCard spent={spent} budget={budget} category={category} transactionCount={catExpenses.length} />
 
-        {/* Divider label */}
         {expenses.length > 0 && (
           <div style={{
             fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
             letterSpacing: 0.8, color: 'var(--text-tertiary)', paddingTop: 4,
           }}>
-            This week
+            This month
           </div>
         )}
 
-        {/* Expense list */}
         <ExpenseList expenses={expenses} onDelete={handleDelete} />
       </div>
 
-      {/* FAB */}
       <button
         onClick={() => setShowAdd(true)}
         style={{
@@ -151,11 +141,7 @@ export default function Home() {
         +
       </button>
 
-      <AddExpenseModal
-        open={showAdd}
-        onClose={() => setShowAdd(false)}
-        onAdded={fetchExpenses}
-      />
+      <AddExpenseModal open={showAdd} onClose={() => setShowAdd(false)} onAdded={fetchExpenses} />
     </>
   )
 }
