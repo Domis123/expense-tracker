@@ -23,6 +23,7 @@ export default function AddExpenseModal({ open, onClose, onAdded, editExpense }:
   const [newShopName, setNewShopName] = useState('')
   const [showNewShop, setShowNewShop] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const amountRef = useRef<HTMLInputElement>(null)
 
   const isEdit = !!editExpense
 
@@ -162,7 +163,7 @@ export default function AddExpenseModal({ open, onClose, onAdded, editExpense }:
           <label style={labelStyle}>Who</label>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {PERSONS.map(p => (
-              <button key={p} style={toggleBtn(person === p)} onClick={() => setPerson(p)}>{p}</button>
+              <button key={p} style={toggleBtn(person === p)} onClick={() => { setPerson(p); setTimeout(() => amountRef.current?.focus(), 100) }}>{p}</button>
             ))}
           </div>
         </div>
@@ -171,6 +172,7 @@ export default function AddExpenseModal({ open, onClose, onAdded, editExpense }:
         <div style={{ marginBottom: 20 }}>
           <label style={labelStyle}>Amount (€)</label>
           <input
+            ref={amountRef}
             type="number" step="0.01" min="0" inputMode="decimal"
             placeholder="0.00" value={amount}
             onChange={e => setAmount(e.target.value)}

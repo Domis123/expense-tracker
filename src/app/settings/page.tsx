@@ -69,9 +69,12 @@ export default function Settings() {
       <div style={{ padding: '0 20px 120px', display: 'flex', flexDirection: 'column' as const, gap: 24 }}>
         {/* Budgets */}
         <div>
-          <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: 0.8, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>
-          Monthly budgets
-          </label>
+        <div style={{ marginBottom: 10 }}>
+            <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: 0.8, color: 'var(--text-secondary)', display: 'block' }}>
+              Monthly budgets
+            </label>
+            <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Tap outside input to save</span>
+          </div>
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '14px 16px', background: 'var(--bg-card)',

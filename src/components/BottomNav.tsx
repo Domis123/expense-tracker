@@ -3,8 +3,8 @@
 import { usePathname, useRouter } from 'next/navigation'
 
 const tabs = [
-  { key: '/', label: 'Home', icon: '◉' },
-  { key: '/history', label: 'History', icon: '☰' },
+  { key: '/', label: 'Home', icon: '⌂' },
+  { key: '/history', label: 'Stats', icon: '◔' },
   { key: '/settings', label: 'Settings', icon: '⚙' },
 ]
 
@@ -22,8 +22,8 @@ export default function BottomNav() {
       maxWidth: 480,
       display: 'flex',
       justifyContent: 'space-around',
-      padding: '8px 16px',
-      paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
+      padding: '6px 16px',
+      paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
       background: 'var(--bg-card)',
       borderTop: '1px solid var(--border-light)',
       zIndex: 100,
@@ -38,22 +38,23 @@ export default function BottomNav() {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: 3,
-              padding: '8px 16px',
+              gap: 2,
+              padding: '8px 20px',
               border: 'none',
-              background: 'none',
+              background: active ? 'var(--bg-warm)' : 'none',
+              borderRadius: 8,
               cursor: 'pointer',
               color: active ? 'var(--text)' : 'var(--text-tertiary)',
               fontSize: 10,
               fontFamily: 'var(--font-sans)',
-              fontWeight: 500,
-              letterSpacing: 0.5,
+              fontWeight: active ? 600 : 500,
+              letterSpacing: 0.3,
               textTransform: 'uppercase' as const,
-              transition: 'color 0.2s',
+              transition: 'all 0.2s',
               minHeight: 44,
             }}
           >
-            <span style={{ fontSize: 20 }}>{tab.icon}</span>
+            <span style={{ fontSize: 18, lineHeight: 1.2 }}>{tab.icon}</span>
             {tab.label}
           </button>
         )

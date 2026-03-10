@@ -14,6 +14,7 @@ export default function Home() {
   const [budget, setBudget] = useState(0)
   const [showAdd, setShowAdd] = useState(false)
   const [editingExpense, setEditingExpense] = useState<ExpenseWithShop | null>(null)
+  const [loading, setLoading] = useState(true)
   const monthStart = getMonthStart()
   const monthEnd = getMonthEnd(monthStart)
 
@@ -51,8 +52,10 @@ export default function Home() {
     }
   }, [category])
 
-  useEffect(() => { fetchExpenses() }, [fetchExpenses])
-  useEffect(() => { fetchBudget() }, [fetchBudget])
+  useEffect(() => {
+    setLoading(true)
+    Promise.all([fetchExpenses(), fetchBudget()]).finally(() => setLoading(false))
+  }, [fetchExpenses, fetchBudget])
 
   useEffect(() => {
     const channel = supabase
@@ -110,7 +113,18 @@ export default function Home() {
           ))}
         </div>
 
-        <BudgetCard spent={spent} budget={budget} category={category} transactionCount={catExpenses.length} />
+        {loading ? (
+          <div style={{
+            background: 'var(--bg-card)', border: '1px solid var(--border)',
+            borderRadius: 6, padding: 20, boxShadow: 'var(--shadow-sm)',
+            display: 'flex', justifyContent: 'center', alignItems: 'center',
+            minHeight: 140, color: 'var(--text-tertiary)', fontSize: 14,
+          }}>
+            Loading...
+          </div>
+        ) : (
+          <BudgetCard spent={spent} budget={budget} category={category} transactionCount={catExpenses.length} />
+        )}
 
         {expenses.length > 0 && (
           <div style={{
