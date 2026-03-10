@@ -22,7 +22,8 @@ export default function BottomNav() {
       maxWidth: 480,
       display: 'flex',
       justifyContent: 'space-around',
-      padding: '8px 16px 28px',
+      padding: '8px 16px',
+      paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
       background: 'var(--bg-card)',
       borderTop: '1px solid var(--border-light)',
       zIndex: 100,
@@ -38,7 +39,7 @@ export default function BottomNav() {
               flexDirection: 'column',
               alignItems: 'center',
               gap: 3,
-              padding: '6px 12px',
+              padding: '8px 16px',
               border: 'none',
               background: 'none',
               cursor: 'pointer',
@@ -49,6 +50,7 @@ export default function BottomNav() {
               letterSpacing: 0.5,
               textTransform: 'uppercase' as const,
               transition: 'color 0.2s',
+              minHeight: 44,
             }}
           >
             <span style={{ fontSize: 20 }}>{tab.icon}</span>

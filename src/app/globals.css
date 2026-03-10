@@ -29,9 +29,33 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+html {
+  height: -webkit-fill-available;
+}
+
 body {
   font-family: var(--font-sans);
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  overscroll-behavior: none;
+}
+
+/* Prevent iOS zoom on input focus */
+input[type="number"],
+input[type="text"],
+input {
+  font-size: 16px !important;
+}
+
+/* Smooth scrolling on iOS */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Remove tap highlight on mobile */
+button, a, input {
+  -webkit-tap-highlight-color: transparent;
 }

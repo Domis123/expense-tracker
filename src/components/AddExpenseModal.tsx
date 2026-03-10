@@ -110,7 +110,7 @@ export default function AddExpenseModal({ open, onClose, onAdded }: Props) {
     >
       <div style={{
         background: 'var(--bg-card)', width: '100%', maxWidth: 480,
-        borderRadius: '12px 12px 0 0', padding: '24px 20px 40px',
+        borderRadius: '12px 12px 0 0', padding: '24px 20px calc(20px + env(safe-area-inset-bottom, 0px))',
         maxHeight: '90vh', overflowY: 'auto' as const,
       }}>
         <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 400, marginBottom: 20 }}>

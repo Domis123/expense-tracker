@@ -111,11 +111,12 @@ export default function Home() {
       <button
         onClick={() => setShowAdd(true)}
         style={{
-          position: 'fixed', bottom: 90,
-          right: 'calc(50% - 210px)',
-          width: 52, height: 52, borderRadius: 6,
+          position: 'fixed',
+          bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
+          right: 20,
+          width: 56, height: 56, borderRadius: 6,
           background: 'var(--text)', color: 'var(--bg)',
-          border: 'none', fontSize: 26, cursor: 'pointer',
+          border: 'none', fontSize: 28, cursor: 'pointer',
           boxShadow: 'var(--shadow-lg)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 99,

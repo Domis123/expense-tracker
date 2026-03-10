@@ -1,10 +1,26 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import BottomNav from '@/components/BottomNav'
 
 export const metadata: Metadata = {
   title: 'Expenses',
   description: 'Couple expense tracker',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Expenses',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
@@ -15,10 +31,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body>
-        <div className="mx-auto max-w-[480px] min-h-screen relative">
+        <div style={{
+          maxWidth: 480,
+          margin: '0 auto',
+          minHeight: '100vh',
+          position: 'relative',
+        }}>
           {children}
           <BottomNav />
         </div>
