@@ -2,12 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getMonthStart, getMonthEnd, monthLabel, fmtDate, fmtTime } from '@/lib/dates'
+import { getMonthStart, getMonthEnd, monthLabel, fmtDate, fmtTime, toISODate } from '@/lib/dates'
 import type { ExpenseWithShop } from '@/lib/types'
+import SpendingChart from '@/components/SpendingChart'
 
 export default function History() {
   const [monthOffset, setMonthOffset] = useState(0)
   const [expenses, setExpenses] = useState<ExpenseWithShop[]>([])
+  const [budget, setBudget] = useState({ food: 0, other: 0 })
+  const [view, setView] = useState<'charts' | 'list'>('charts')
 
   const monthStart = getMonthStart()
   monthStart.setMonth(monthStart.getMonth() + monthOffset)
@@ -23,19 +26,50 @@ export default function History() {
       .order('created_at', { ascending: false })
 
     if (data) setExpenses(data as ExpenseWithShop[])
+
+    // Fetch budgets
+    const fetchBudget = async (cat: 'food' | 'other') => {
+      const { data } = await supabase
+        .from('budgets')
+        .select('amount')
+        .eq('category', cat)
+        .eq('week_start', toISODate(monthStart))
+        .single()
+
+      if (data) return Number(data.amount)
+
+      const { data: prev } = await supabase
+        .from('budgets')
+        .select('amount')
+        .eq('category', cat)
+        .order('week_start', { ascending: false })
+        .limit(1)
+        .single()
+
+      return prev ? Number(prev.amount) : 0
+    }
+
+    const [food, other] = await Promise.all([fetchBudget('food'), fetchBudget('other')])
+    setBudget({ food, other })
   }, [monthOffset])
 
   useEffect(() => { fetchMonth() }, [fetchMonth])
-
-  const foodSpent = expenses.filter(e => e.category === 'food').reduce((s, e) => s + Number(e.amount), 0)
-  const otherSpent = expenses.filter(e => e.category === 'other').reduce((s, e) => s + Number(e.amount), 0)
-  const totalSpent = foodSpent + otherSpent
 
   const grouped: Record<string, ExpenseWithShop[]> = {}
   expenses.forEach(e => {
     const key = fmtDate(e.created_at)
     if (!grouped[key]) grouped[key] = []
     grouped[key].push(e)
+  })
+
+  const toggleStyle = (active: boolean) => ({
+    padding: '8px 16px',
+    border: `1.5px solid ${active ? 'var(--text)' : 'var(--border)'}`,
+    borderRadius: 6,
+    background: active ? 'var(--text)' : 'var(--bg-card)',
+    fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 500 as const,
+    color: active ? 'var(--bg-card)' : 'var(--text-secondary)',
+    cursor: 'pointer' as const, transition: 'all 0.15s', minHeight: 40,
   })
 
   return (
@@ -46,9 +80,9 @@ export default function History() {
         </h1>
       </div>
 
-      <div style={{ padding: '0 20px 120px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ padding: '0 20px 120px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         {/* Month nav */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }}>
           <button
             onClick={() => setMonthOffset(o => o - 1)}
             style={{
@@ -76,62 +110,51 @@ export default function History() {
           </button>
         </div>
 
-        {/* Summary */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          {[
-            { label: 'Total', value: `€${totalSpent.toFixed(2)}` },
-            { label: 'Food', value: `€${foodSpent.toFixed(2)}` },
-            { label: 'Other', value: `€${otherSpent.toFixed(2)}` },
-            { label: 'Entries', value: expenses.length.toString() },
-          ].map(box => (
-            <div key={box.label} style={{
-              padding: 14, border: '1px solid var(--border-light)',
-              borderRadius: 6, background: 'var(--bg-card)',
-            }}>
-              <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: 0.6, color: 'var(--text-tertiary)', marginBottom: 4 }}>
-                {box.label}
-              </div>
-              <div style={{ fontFamily: 'var(--font-serif)', fontSize: 22, letterSpacing: -0.5 }}>
-                {box.value}
-              </div>
-            </div>
-          ))}
+        {/* View toggle */}
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button style={toggleStyle(view === 'charts')} onClick={() => setView('charts')}>Charts</button>
+          <button style={toggleStyle(view === 'list')} onClick={() => setView('list')}>List</button>
         </div>
 
-        {/* Expenses */}
-        {Object.keys(grouped).length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--text-tertiary)' }}>
-            <div style={{ fontSize: 28, marginBottom: 12, opacity: 0.5 }}>○</div>
-            <div style={{ fontSize: 14 }}>No expenses this month.</div>
-          </div>
+        {view === 'charts' ? (
+          <SpendingChart expenses={expenses} budget={budget} />
         ) : (
-          Object.entries(grouped).map(([date, items]) => (
-            <div key={date}>
-              <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: 0.8, color: 'var(--text-tertiary)', padding: '8px 0 4px' }}>
-                {date}
+          <>
+            {Object.keys(grouped).length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--text-tertiary)' }}>
+                <div style={{ fontSize: 28, marginBottom: 12, opacity: 0.5 }}>○</div>
+                <div style={{ fontSize: 14 }}>No expenses this month.</div>
               </div>
-              {items.map(e => (
-                <div key={e.id} style={{
-                  display: 'flex', alignItems: 'center', padding: '14px 16px',
-                  background: 'var(--bg-card)', border: '1px solid var(--border-light)',
-                  borderRadius: 6, marginBottom: 6, minHeight: 56,
-                }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 500, fontSize: 15 }}>{e.shops?.name || 'Unknown'}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>
-                      {e.person}{e.note ? ` · ${e.note}` : ''}
-                    </div>
+            ) : (
+              Object.entries(grouped).map(([date, items]) => (
+                <div key={date}>
+                  <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: 0.8, color: 'var(--text-tertiary)', padding: '8px 0 4px' }}>
+                    {date}
                   </div>
-                  <span style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 500, letterSpacing: -0.5, marginLeft: 12 }}>
-                    €{Number(e.amount).toFixed(2)}
-                  </span>
-                  <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 10, minWidth: 36, textAlign: 'right' as const }}>
-                    {fmtTime(e.created_at)}
-                  </span>
+                  {items.map(e => (
+                    <div key={e.id} style={{
+                      display: 'flex', alignItems: 'center', padding: '14px 16px',
+                      background: 'var(--bg-card)', border: '1px solid var(--border-light)',
+                      borderRadius: 6, marginBottom: 6, minHeight: 56,
+                    }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 500, fontSize: 15 }}>{e.shops?.name || 'Unknown'}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                          {e.person}{e.note ? ` · ${e.note}` : ''}
+                        </div>
+                      </div>
+                      <span style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 500, letterSpacing: -0.5, marginLeft: 12 }}>
+                        €{Number(e.amount).toFixed(2)}
+                      </span>
+                      <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 10, minWidth: 36, textAlign: 'right' as const }}>
+                        {fmtTime(e.created_at)}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ))
+              ))
+            )}
+          </>
         )}
       </div>
     </>
