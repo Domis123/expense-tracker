@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
+@import "tailwindcss";
+
+:root {
+  --bg: #FAF9F7;
+  --bg-warm: #F5F0EB;
+  --bg-card: #FFFFFF;
+  --bg-hover: #F0ECE6;
+  --border: #E8E2DA;
+  --border-light: #F0ECE6;
+  --text: #2D2B28;
+  --text-secondary: #8C857C;
+  --text-tertiary: #B5AFA7;
+  --accent: #D4A574;
+  --accent-light: #F0E0CC;
+  --accent-dark: #B8895C;
+  --green: #7BA886;
+  --green-light: #E8F2EC;
+  --red: #C47A6C;
+  --red-light: #F5E4E0;
+  --yellow: #D4B96A;
+  --yellow-light: #F5EDD4;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+  --font-serif: 'Newsreader', Georgia, serif;
+  --font-sans: 'DM Sans', -apple-system, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
