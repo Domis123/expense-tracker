@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Shop, ExpenseWithShop } from '@/lib/types'
 
-const PERSONS = ['Dominykas', 'Mylimoji']
+const PERSONS = ['Dominykas', 'Julita']
 
 interface Props {
   open: boolean
