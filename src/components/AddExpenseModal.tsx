@@ -6,11 +6,17 @@ import type { Shop, ExpenseWithShop } from '@/lib/types'
 
 const PERSONS = ['Dominykas', 'Julita']
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
 interface Props {
   open: boolean
   onClose: () => void
   onAdded: () => void
   editExpense?: ExpenseWithShop | null
+}
+
+function getDaysInMonth(year: number, month: number) {
+  return new Date(year, month + 1, 0).getDate()
 }
 
 export default function AddExpenseModal({ open, onClose, onAdded, editExpense }: Props) {
@@ -23,8 +29,13 @@ export default function AddExpenseModal({ open, onClose, onAdded, editExpense }:
   const [newShopName, setNewShopName] = useState('')
   const [showNewShop, setShowNewShop] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const amountRef = useRef<HTMLInputElement>(null)
 
+  const now = new Date()
+  const [selYear, setSelYear] = useState(now.getFullYear())
+  const [selMonth, setSelMonth] = useState(now.getMonth())
+  const [selDay, setSelDay] = useState(now.getDate())
+
+  const amountRef = useRef<HTMLInputElement>(null)
   const isEdit = !!editExpense
 
   useEffect(() => {
@@ -40,12 +51,20 @@ export default function AddExpenseModal({ open, onClose, onAdded, editExpense }:
         setAmount(editExpense.amount.toString())
         setCategory(editExpense.category)
         setNote(editExpense.note || '')
+        const d = new Date(editExpense.created_at)
+        setSelYear(d.getFullYear())
+        setSelMonth(d.getMonth())
+        setSelDay(d.getDate())
       } else {
         setPerson('')
         setShopId('')
         setAmount('')
         setCategory('food')
         setNote('')
+        const n = new Date()
+        setSelYear(n.getFullYear())
+        setSelMonth(n.getMonth())
+        setSelDay(n.getDate())
       }
     } else {
       document.body.style.overflow = ''
@@ -53,11 +72,19 @@ export default function AddExpenseModal({ open, onClose, onAdded, editExpense }:
     return () => { document.body.style.overflow = '' }
   }, [open, editExpense])
 
+  // Clamp day if month changes
+  useEffect(() => {
+    const maxDay = getDaysInMonth(selYear, selMonth)
+    if (selDay > maxDay) setSelDay(maxDay)
+  }, [selMonth, selYear])
+
   const canSubmit = person && shopId && amount && Number(amount) > 0 && !submitting
 
   const handleSubmit = async () => {
     if (!canSubmit) return
     setSubmitting(true)
+
+    const selectedDate = new Date(selYear, selMonth, selDay, 12, 0, 0)
 
     if (isEdit) {
       await supabase.from('expenses').update({
@@ -66,6 +93,7 @@ export default function AddExpenseModal({ open, onClose, onAdded, editExpense }:
         category,
         person,
         note: note || null,
+        created_at: selectedDate.toISOString(),
       }).eq('id', editExpense.id)
     } else {
       await supabase.from('expenses').insert({
@@ -74,6 +102,7 @@ export default function AddExpenseModal({ open, onClose, onAdded, editExpense }:
         category,
         person,
         note: note || null,
+        created_at: selectedDate.toISOString(),
       })
     }
 
@@ -132,6 +161,21 @@ export default function AddExpenseModal({ open, onClose, onAdded, editExpense }:
     minHeight: 44,
   })
 
+  const selectStyle = {
+    padding: '10px 12px',
+    border: '1.5px solid var(--border)',
+    borderRadius: 6,
+    fontFamily: 'var(--font-sans)',
+    fontSize: 14,
+    color: 'var(--text)',
+    background: 'var(--bg)',
+    outline: 'none',
+    minHeight: 44,
+    cursor: 'pointer' as const,
+  }
+
+  const daysInMonth = getDaysInMonth(selYear, selMonth)
+
   return (
     <div
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
@@ -184,6 +228,28 @@ export default function AddExpenseModal({ open, onClose, onAdded, editExpense }:
               outline: 'none', color: 'var(--text)', background: 'var(--bg)',
             }}
           />
+        </div>
+
+        {/* Date */}
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Date</label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+            <select value={selDay} onChange={e => setSelDay(Number(e.target.value))} style={selectStyle}>
+              {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+            <select value={selMonth} onChange={e => setSelMonth(Number(e.target.value))} style={selectStyle}>
+              {MONTHS.map((m, i) => (
+                <option key={m} value={i}>{m}</option>
+              ))}
+            </select>
+            <select value={selYear} onChange={e => setSelYear(Number(e.target.value))} style={selectStyle}>
+              {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Shop */}

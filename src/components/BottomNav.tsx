@@ -3,8 +3,9 @@
 import { usePathname, useRouter } from 'next/navigation'
 
 const tabs = [
-  { key: '/', label: 'Home', icon: '⌂' },
-  { key: '/history', label: 'Stats', icon: '◔' },
+  { key: '/', label: 'Expenses', icon: '€' },
+  { key: '/savings', label: 'Savings', icon: '◎' },
+  { key: '/stats', label: 'Stats', icon: '◔' },
   { key: '/settings', label: 'Settings', icon: '⚙' },
 ]
 
@@ -22,7 +23,7 @@ export default function BottomNav() {
       maxWidth: 480,
       display: 'flex',
       justifyContent: 'space-around',
-      padding: '6px 16px',
+      padding: '6px 8px',
       paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
       background: 'var(--bg-card)',
       borderTop: '1px solid var(--border-light)',
@@ -39,13 +40,13 @@ export default function BottomNav() {
               flexDirection: 'column',
               alignItems: 'center',
               gap: 2,
-              padding: '8px 20px',
+              padding: '6px 14px',
               border: 'none',
               background: active ? 'var(--bg-warm)' : 'none',
               borderRadius: 8,
               cursor: 'pointer',
               color: active ? 'var(--text)' : 'var(--text-tertiary)',
-              fontSize: 10,
+              fontSize: 9,
               fontFamily: 'var(--font-sans)',
               fontWeight: active ? 600 : 500,
               letterSpacing: 0.3,
